@@ -1,5 +1,9 @@
 # 🎬 Video Cutter
 
+[![Build Status](https://github.com/AtaraxyState/VideoCutter/workflows/Test%20Build/badge.svg)](https://github.com/AtaraxyState/VideoCutter/actions)
+[![Release](https://github.com/AtaraxyState/VideoCutter/workflows/Build%20and%20Release/badge.svg)](https://github.com/AtaraxyState/VideoCutter/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A comprehensive Python application for cutting videos at specified timestamps using FFmpeg. Features both command-line and GUI versions with advanced functionality including preview, scaling options, and Windows context menu integration.
 
 ## ✨ Features
@@ -123,7 +127,16 @@ The program supports scaling down videos to reduce file size:
 - ✅ Error handling and validation
 - ✅ Progress feedback
 
-## 📦 Building Portable Executable
+## 📦 Download & Installation
+
+### 🚀 **Quick Download (Recommended)**
+**[📥 Download Latest Release](https://github.com/AtaraxyState/VideoCutter/releases/latest)**
+
+- Pre-built Windows executable
+- No Python installation required
+- Extract and run `VideoCutter.exe`
+
+### 🛠️ **Build from Source**
 
 Create a standalone .exe file that doesn't require Python:
 
@@ -142,6 +155,12 @@ This creates a `VideoCutter_Portable` folder with:
 - `VideoCutter.exe` - The main executable
 - All necessary dependencies
 - README and documentation
+
+### 🔄 **Automated Releases**
+New releases are automatically built and published when version tags are created:
+- Each release includes a portable Windows executable
+- Releases are triggered by pushing tags like `v1.0.0`, `v1.1.0`, etc.
+- GitHub Actions handles building, packaging, and publishing
 
 ## 🖱️ Windows Context Menu Integration
 

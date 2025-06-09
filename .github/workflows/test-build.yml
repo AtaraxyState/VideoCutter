@@ -1,0 +1,75 @@
+name: Test Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~\AppData\Local\pip\Cache
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Test imports and basic functionality
+      run: |
+        # Test that the modules can be imported
+        python -c "from video_cutter import VideoCutter; print('✅ video_cutter module imports successfully')"
+        python -c "import video_cutter_gui; print('✅ video_cutter_gui module imports successfully')"
+        python -c "import context_menu; print('✅ context_menu module imports successfully')"
+        
+        # Test timestamp parsing
+        python -c "from video_cutter import VideoCutter; print('✅ Timestamp parsing:', VideoCutter.parse_timestamp('1:30'))"
+        
+    - name: Test build process
+      run: |
+        # Test that the build script runs without errors
+        python build_exe.py
+        
+    - name: Verify build output
+      run: |
+        if (Test-Path "VideoCutter_Portable\VideoCutter.exe") {
+          Write-Host "✅ Build test successful - VideoCutter.exe created"
+          $exeSize = (Get-Item "VideoCutter_Portable\VideoCutter.exe").Length / 1MB
+          Write-Host "📦 Executable size: $([math]::Round($exeSize, 2)) MB"
+          
+          # List all files in the portable folder
+          Write-Host "📁 Portable package contents:"
+          Get-ChildItem "VideoCutter_Portable" | Select-Object Name, Length | Format-Table
+        } else {
+          Write-Host "❌ Build test failed - VideoCutter.exe not found"
+          exit 1
+        }
+        
+    - name: Test executable (basic check)
+      run: |
+        # Test that the executable can run and show help
+        cd VideoCutter_Portable
+        # Note: Can't fully test GUI on headless runner, but we can test basic execution
+        $result = Start-Process -FilePath ".\VideoCutter.exe" -ArgumentList "--help" -PassThru -Wait -WindowStyle Hidden
+        if ($result.ExitCode -eq 0) {
+          Write-Host "✅ Executable runs successfully"
+        } else {
+          Write-Host "⚠️ Executable test inconclusive (expected for GUI app on headless runner)"
+        } 

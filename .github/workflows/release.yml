@@ -1,0 +1,149 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v2.1.3, etc.
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~\AppData\Local\pip\Cache
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Build executable
+      run: |
+        python build_exe.py
+        
+    - name: Verify build
+      run: |
+        if (Test-Path "VideoCutter_Portable\VideoCutter.exe") {
+          Write-Host "✅ Build successful - VideoCutter.exe found"
+          Get-ChildItem "VideoCutter_Portable" -Recurse | Select-Object Name, Length | Format-Table
+        } else {
+          Write-Host "❌ Build failed - VideoCutter.exe not found"
+          exit 1
+        }
+        
+    - name: Create release package
+      run: |
+        # Create a zip file with the portable executable
+        $tagName = "${{ github.ref_name }}"
+        $zipName = "VideoCutter-$tagName-Windows-Portable.zip"
+        
+        # Compress the entire VideoCutter_Portable folder
+        Compress-Archive -Path "VideoCutter_Portable\*" -DestinationPath $zipName
+        
+        # Verify the zip was created
+        if (Test-Path $zipName) {
+          $zipSize = (Get-Item $zipName).Length / 1MB
+          Write-Host "✅ Created release package: $zipName ($([math]::Round($zipSize, 2)) MB)"
+        } else {
+          Write-Host "❌ Failed to create release package"
+          exit 1
+        }
+        
+        # Set output for later steps
+        echo "ZIP_NAME=$zipName" >> $env:GITHUB_ENV
+        
+    - name: Extract version info
+      id: version
+      run: |
+        $tagName = "${{ github.ref_name }}"
+        $version = $tagName -replace '^v', ''
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+        echo "TAG_NAME=$tagName" >> $env:GITHUB_ENV
+        
+        # Extract release notes from tag message if available
+        $releaseNotes = @"
+        ## Video Cutter $version
+        
+        ### 🎬 What's New
+        - Portable Windows executable
+        - No Python installation required
+        - All features included: GUI, CLI, Preview, Context Menu Integration
+        
+        ### 📦 Download
+        - Download ``VideoCutter-$tagName-Windows-Portable.zip``
+        - Extract anywhere on your Windows computer
+        - Run ``VideoCutter.exe`` to start
+        
+        ### ✨ Features
+        - **🖥️ Dual Interface**: Both GUI and command-line versions
+        - **📋 Preview Mode**: See exactly what segments will be created before processing
+        - **🔄 Smart Scaling**: Multiple resolution presets and custom settings
+        - **⚡ Fast Processing**: Stream copying for quick cuts without re-encoding
+        - **📁 Context Menu Integration**: Right-click video files in Windows Explorer
+        - **📊 Real-time Progress**: Live feedback during processing
+        - **🎯 Flexible Timestamps**: Supports HH:MM:SS, MM:SS, and SS formats
+        
+        ### 📋 Requirements
+        - Windows 10/11
+        - FFmpeg (included in portable package)
+        
+        ### 🚀 Quick Start
+        1. Download and extract the zip file
+        2. Run ``VideoCutter.exe``
+        3. Select your video file
+        4. Add timestamps where you want to cut
+        5. Click Preview to see what will be created
+        6. Click Cut Video to process
+        
+        For context menu integration, run ``context_menu.py`` as administrator.
+        "@
+        
+        # Save release notes to file for the release step
+        $releaseNotes | Out-File -FilePath "release_notes.md" -Encoding UTF8
+        
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.TAG_NAME }}
+        release_name: Video Cutter ${{ env.VERSION }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ env.ZIP_NAME }}
+        asset_name: ${{ env.ZIP_NAME }}
+        asset_content_type: application/zip
+        
+    - name: Release Summary
+      run: |
+        Write-Host "🎉 Release Created Successfully!"
+        Write-Host "📦 Package: ${{ env.ZIP_NAME }}"
+        Write-Host "🔗 Release URL: ${{ steps.create_release.outputs.html_url }}"
+        Write-Host ""
+        Write-Host "Users can now:"
+        Write-Host "  1. Download the portable executable"
+        Write-Host "  2. Extract and run VideoCutter.exe"
+        Write-Host "  3. No Python installation required!" 
