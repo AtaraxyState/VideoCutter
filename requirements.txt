@@ -1,0 +1,6 @@
+# Video Cutter Requirements
+# This program uses only Python standard library modules
+# The only external dependency is FFmpeg (system-level installation required)
+
+# No Python packages needed - uses subprocess to call FFmpeg
+# Install FFmpeg from: https://ffmpeg.org/download.html 
