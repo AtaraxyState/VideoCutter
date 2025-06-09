@@ -8,6 +8,9 @@ on:
 jobs:
   build-and-release:
     runs-on: windows-latest
+    permissions:
+      contents: write
+      actions: read
     
     steps:
     - name: Checkout code
@@ -38,10 +41,10 @@ jobs:
     - name: Verify build
       run: |
         if (Test-Path "VideoCutter_Portable\VideoCutter.exe") {
-          Write-Host "✅ Build successful - VideoCutter.exe found"
+          Write-Host "Build successful - VideoCutter.exe found"
           Get-ChildItem "VideoCutter_Portable" -Recurse | Select-Object Name, Length | Format-Table
         } else {
-          Write-Host "❌ Build failed - VideoCutter.exe not found"
+          Write-Host "Build failed - VideoCutter.exe not found"
           exit 1
         }
         
@@ -57,9 +60,9 @@ jobs:
         # Verify the zip was created
         if (Test-Path $zipName) {
           $zipSize = (Get-Item $zipName).Length / 1MB
-          Write-Host "✅ Created release package: $zipName ($([math]::Round($zipSize, 2)) MB)"
+          Write-Host "Created release package: $zipName ($([math]::Round($zipSize, 2)) MB)"
         } else {
-          Write-Host "❌ Failed to create release package"
+          Write-Host "Failed to create release package"
           exit 1
         }
         
@@ -78,30 +81,30 @@ jobs:
         $releaseNotes = @"
         ## Video Cutter $version
         
-        ### 🎬 What's New
+        ### What's New
         - Portable Windows executable
         - No Python installation required
         - All features included: GUI, CLI, Preview, Context Menu Integration
         
-        ### 📦 Download
+        ### Download
         - Download ``VideoCutter-$tagName-Windows-Portable.zip``
         - Extract anywhere on your Windows computer
         - Run ``VideoCutter.exe`` to start
         
-        ### ✨ Features
-        - **🖥️ Dual Interface**: Both GUI and command-line versions
-        - **📋 Preview Mode**: See exactly what segments will be created before processing
-        - **🔄 Smart Scaling**: Multiple resolution presets and custom settings
-        - **⚡ Fast Processing**: Stream copying for quick cuts without re-encoding
-        - **📁 Context Menu Integration**: Right-click video files in Windows Explorer
-        - **📊 Real-time Progress**: Live feedback during processing
-        - **🎯 Flexible Timestamps**: Supports HH:MM:SS, MM:SS, and SS formats
+        ### Features
+        - **Dual Interface**: Both GUI and command-line versions
+        - **Preview Mode**: See exactly what segments will be created before processing
+        - **Smart Scaling**: Multiple resolution presets and custom settings
+        - **Fast Processing**: Stream copying for quick cuts without re-encoding
+        - **Context Menu Integration**: Right-click video files in Windows Explorer
+        - **Real-time Progress**: Live feedback during processing
+        - **Flexible Timestamps**: Supports HH:MM:SS, MM:SS, and SS formats
         
-        ### 📋 Requirements
+        ### Requirements
         - Windows 10/11
         - FFmpeg (included in portable package)
         
-        ### 🚀 Quick Start
+        ### Quick Start
         1. Download and extract the zip file
         2. Run ``VideoCutter.exe``
         3. Select your video file
@@ -116,32 +119,24 @@ jobs:
         $releaseNotes | Out-File -FilePath "release_notes.md" -Encoding UTF8
         
     - name: Create GitHub Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ env.TAG_NAME }}
-        release_name: Video Cutter ${{ env.VERSION }}
-        body_path: release_notes.md
-        draft: false
-        prerelease: false
+      run: |
+        # Create the release using GitHub CLI
+        gh release create ${{ env.TAG_NAME }} `
+          --title "Video Cutter ${{ env.VERSION }}" `
+          --notes-file release_notes.md `
+          --latest `
+          ${{ env.ZIP_NAME }}
         
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
+        Write-Host "Release created successfully!"
+        Write-Host "Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ env.TAG_NAME }}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ env.ZIP_NAME }}
-        asset_name: ${{ env.ZIP_NAME }}
-        asset_content_type: application/zip
         
     - name: Release Summary
       run: |
-        Write-Host "🎉 Release Created Successfully!"
-        Write-Host "📦 Package: ${{ env.ZIP_NAME }}"
-        Write-Host "🔗 Release URL: ${{ steps.create_release.outputs.html_url }}"
+        Write-Host "Release Created Successfully!"
+        Write-Host "Package: ${{ env.ZIP_NAME }}"
+        Write-Host "Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ env.TAG_NAME }}"
         Write-Host ""
         Write-Host "Users can now:"
         Write-Host "  1. Download the portable executable"
