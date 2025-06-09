@@ -12,20 +12,20 @@ from pathlib import Path
 
 def build_executable():
     """Build the Video Cutter executable."""
-    print("🔨 Building Video Cutter executable...")
+    print("Building Video Cutter executable...")
     
     # Check if PyInstaller is installed
     try:
         import PyInstaller
     except ImportError:
-        print("❌ PyInstaller not found. Installing...")
+        print("PyInstaller not found. Installing...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
-        print("✅ PyInstaller installed successfully!")
+        print("PyInstaller installed successfully!")
     
     # Clean previous builds
     for folder in ["build", "dist"]:
         if os.path.exists(folder):
-            print(f"🧹 Cleaning {folder} folder...")
+            print(f"Cleaning {folder} folder...")
             shutil.rmtree(folder)
     
     # Build command
@@ -47,37 +47,37 @@ def build_executable():
     # Remove icon parameter if icon file doesn't exist
     if not os.path.exists("icon.ico"):
         cmd = [arg for arg in cmd if not arg.startswith("--icon")]
-        print("ℹ️ No icon.ico found, building without custom icon")
+        print("No icon.ico found, building without custom icon")
     
-    print("🚀 Running PyInstaller...")
+    print("Running PyInstaller...")
     print(" ".join(cmd))
     
     try:
         subprocess.check_call(cmd)
-        print("✅ Build completed successfully!")
+        print("Build completed successfully!")
         
         # Check if executable exists
         exe_path = Path("dist/VideoCutter.exe")
         if exe_path.exists():
             size_mb = exe_path.stat().st_size / (1024 * 1024)
-            print(f"📦 Executable created: {exe_path}")
-            print(f"📏 Size: {size_mb:.1f} MB")
-            print(f"🎯 This executable can be run from anywhere (USB, different computers, etc.)")
+            print(f"Executable created: {exe_path}")
+            print(f"Size: {size_mb:.1f} MB")
+            print(f"This executable can be run from anywhere (USB, different computers, etc.)")
             
             # Create portable package
             create_portable_package()
         else:
-            print("❌ Executable not found in expected location")
+            print("Executable not found in expected location")
             
     except subprocess.CalledProcessError as e:
-        print(f"❌ Build failed: {e}")
+        print(f"Build failed: {e}")
         return False
     
     return True
 
 def create_portable_package():
     """Create a portable package with the executable and instructions."""
-    print("\n📦 Creating portable package...")
+    print("\nCreating portable package...")
     
     package_dir = Path("VideoCutter_Portable")
     if package_dir.exists():
@@ -122,7 +122,7 @@ def create_portable_package():
 - For best results, save output to your Documents folder
 - Make sure no other programs have the video file open
 
-Enjoy your video cutting! 🎬
+Enjoy your video cutting!
 """
     
     with open(package_dir / "README.txt", "w", encoding="utf-8") as f:
@@ -153,14 +153,14 @@ The Video Cutter will detect if FFmpeg is missing and guide you through installa
     with open(package_dir / "FFmpeg_Installation.txt", "w", encoding="utf-8") as f:
         f.write(ffmpeg_info)
     
-    print(f"✅ Portable package created: {package_dir}")
-    print("📁 Contents:")
+    print(f"Portable package created: {package_dir}")
+    print("Contents:")
     for item in package_dir.iterdir():
         print(f"   - {item.name}")
 
 def main():
     """Main build function."""
-    print("🎬 Video Cutter Portable Builder")
+    print("Video Cutter Portable Builder")
     print("=" * 40)
     
     # Check if required files exist
@@ -168,18 +168,18 @@ def main():
     missing_files = [f for f in required_files if not os.path.exists(f)]
     
     if missing_files:
-        print(f"❌ Missing required files: {', '.join(missing_files)}")
+        print(f"Missing required files: {', '.join(missing_files)}")
         return False
     
     # Build executable
     success = build_executable()
     
     if success:
-        print("\n🎉 Build completed successfully!")
-        print("📦 Your portable Video Cutter is ready!")
-        print("💡 You can now copy the VideoCutter_Portable folder to any Windows computer or USB drive")
+        print("\nBuild completed successfully!")
+        print("Your portable Video Cutter is ready!")
+        print("You can now copy the VideoCutter_Portable folder to any Windows computer or USB drive")
     else:
-        print("\n❌ Build failed. Check the error messages above.")
+        print("\nBuild failed. Check the error messages above.")
     
     return success
 
