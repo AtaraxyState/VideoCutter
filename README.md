@@ -1,6 +1,5 @@
 # 🎬 Video Cutter
 
-[![Build Status](https://github.com/AtaraxyState/VideoCutter/workflows/Test%20Build/badge.svg)](https://github.com/AtaraxyState/VideoCutter/actions)
 [![Release](https://github.com/AtaraxyState/VideoCutter/workflows/Build%20and%20Release/badge.svg)](https://github.com/AtaraxyState/VideoCutter/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
